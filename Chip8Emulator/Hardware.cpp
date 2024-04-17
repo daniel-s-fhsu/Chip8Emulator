@@ -122,10 +122,10 @@ void Hardware::Hardware::decodeOpcode() {
 		if (vRegister[xNibble] == vRegister[yNibble]) programCounter += 2;
 		break;
 	case 6:
-		this->vRegister[xNibble] = nnByte;
+		vRegister[xNibble] = nnByte;
 		break;
 	case 7:
-		this->vRegister[xNibble] += nnByte;
+		vRegister[xNibble] += nnByte;
 		break;
 	case 8:
 		switch (nNibble) {

@@ -8,7 +8,7 @@
 namespace Hardware {
 	class Hardware {
 	public:
-		Hardware(SDLDisplay::SDLDisplay* display);
+		Hardware(SDLDisplay::SDLDisplay* display, bool isOldShift);
 		bool loadProgram(char* filename);
 		bool processInstruction();
 	private:
@@ -17,6 +17,8 @@ namespace Hardware {
 		unsigned char vRegister[16]{};
 		unsigned short indexPointer;
 		unsigned short programCounter;
+
+		bool oldStyleShift;
 
 		std::stack<short>* stack;
 		SDLDisplay::SDLDisplay* display;

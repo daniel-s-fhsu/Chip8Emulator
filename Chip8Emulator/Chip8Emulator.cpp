@@ -5,7 +5,7 @@
 #include "SDLDisplay.h"
 #include "Hardware.h"
 
-#define INSTRUCTIONS_PER_SECOND 10
+#define INSTRUCTIONS_PER_SECOND 70
 
 bool checkFilename(int argc, char* argv[]);
 
@@ -14,7 +14,7 @@ int main(int argc, char *argv[]) {
 
 	bool isRunning = true;
 	SDLDisplay::SDLDisplay* display = new SDLDisplay::SDLDisplay();
-	Hardware::Hardware* chip8 = new Hardware::Hardware(display);
+	Hardware::Hardware* chip8 = new Hardware::Hardware(display, false);
 
 	SDL_Event ev;
 
