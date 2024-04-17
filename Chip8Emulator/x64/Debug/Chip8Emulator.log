@@ -1,3 +1,4 @@
-﻿  Chip8Emulator.cpp
-H:\Prog\cpp\chip8\Chip8Emulator\Chip8Emulator.cpp(44,34): warning C4018: '<': signed/unsigned mismatch
+﻿  SDLDisplay.cpp
+H:\Prog\cpp\chip8\Chip8Emulator\SDLDisplay.cpp(58,29): warning C4553: '==': result of expression not used; did you intend '='?
+H:\Prog\cpp\chip8\Chip8Emulator\SDLDisplay.cpp(61,29): warning C4553: '==': result of expression not used; did you intend '='?
   Chip8Emulator.vcxproj -> H:\Prog\cpp\chip8\x64\Debug\Chip8Emulator.exe

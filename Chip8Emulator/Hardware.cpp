@@ -1,11 +1,12 @@
 #include "Hardware.h"
 
-Hardware::Hardware::Hardware(SDLDisplay::SDLDisplay* display) {
+Hardware::Hardware::Hardware(SDLDisplay::SDLDisplay* display, bool isOldShift) {
 	this->display = display;
 	this->indexPointer = 0;
 	this->opcode = 0;
 	this->programCounter = 0;
 	this->stack = new std::stack<short>();
+	this->oldStyleShift = isOldShift;
 }
 
 bool Hardware::Hardware::loadProgram(char* filePath) {
@@ -72,6 +73,10 @@ void Hardware::Hardware::decodeOpcode() {
 		case 0x00e0:
 			this->display->clearScreen();
 			break;
+		case 0x00ee:
+			this->programCounter = this->stack->top();
+			this->stack->pop();
+			break;
 		}
 		break;
 	case 1:
@@ -103,11 +108,70 @@ void Hardware::Hardware::decodeOpcode() {
 
 		if (isCollision) vRegister[15] = 1;
 		break;
+	case 2:
+		this->stack->push(this->programCounter);
+		this->programCounter = nnn;
+		break;
+	case 3:
+		if (vRegister[xNibble] == nnByte) programCounter += 2;
+		break;
+	case 4:
+		if (!vRegister[xNibble] == nnByte) programCounter += 2;
+		break;
+	case 5:
+		if (vRegister[xNibble] == vRegister[yNibble]) programCounter += 2;
+		break;
 	case 6:
 		this->vRegister[xNibble] = nnByte;
 		break;
 	case 7:
 		this->vRegister[xNibble] += nnByte;
+		break;
+	case 8:
+		switch (nNibble) {
+		case 0:
+			vRegister[xNibble] = vRegister[yNibble];
+			break;
+		case 1:
+			vRegister[xNibble] |= vRegister[yNibble];
+			break;
+		case 2:
+			vRegister[xNibble] &= vRegister[yNibble];
+			break;
+		case 3:
+			vRegister[xNibble] ^= vRegister[yNibble];
+			break;
+		case 4:
+			vRegister[15] = 0;
+			if (vRegister[xNibble] + vRegister[yNibble] > 255) vRegister[15] = 1;
+			vRegister[xNibble] += vRegister[yNibble];
+			break;
+		case 5:
+			vRegister[15] = 1;
+			if (vRegister[xNibble] < vRegister[yNibble]) vRegister[15] = 0;
+			vRegister[xNibble] -= vRegister[yNibble];
+			break;
+		case 6:
+			vRegister[15] = 0;
+			if (this->oldStyleShift == true) vRegister[xNibble] = vRegister[yNibble];
+			if ((vRegister[xNibble] & 0x01) == 1) vRegister[15] = 1;
+			vRegister[xNibble] >>= 1;
+			break;
+		case 7:
+			vRegister[15] = 1;
+			if (vRegister[yNibble] < vRegister[xNibble]) vRegister[15] = 0;
+			vRegister[yNibble] -= vRegister[xNibble];
+			break;
+		case 14:
+			vRegister[15] = 0;
+			if (this->oldStyleShift == true) vRegister[xNibble] = vRegister[yNibble];
+			if ((vRegister[xNibble] & 0x80) == 128) vRegister[15] = 1;
+			vRegister[xNibble] <<= 1;
+			break;
+		}
+		break;
+	case 9:
+		if (vRegister[xNibble] != vRegister[yNibble]) programCounter += 2;
 		break;
 	}
 
