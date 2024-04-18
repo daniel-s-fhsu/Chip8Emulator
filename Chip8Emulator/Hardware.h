@@ -4,6 +4,7 @@
 #include <iostream>
 #include <bitset>
 #include <stack>
+#include <cstdlib>
 
 namespace Hardware {
 	class Hardware {
@@ -19,6 +20,7 @@ namespace Hardware {
 		unsigned short programCounter;
 
 		bool oldStyleShift;
+		bool oldStyleJump;
 
 		std::stack<short>* stack;
 		SDLDisplay::SDLDisplay* display;

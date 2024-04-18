@@ -7,6 +7,8 @@ Hardware::Hardware::Hardware(SDLDisplay::SDLDisplay* display, bool isOldShift) {
 	this->programCounter = 0;
 	this->stack = new std::stack<short>();
 	this->oldStyleShift = isOldShift;
+
+	srand(time(NULL));
 }
 
 bool Hardware::Hardware::loadProgram(char* filePath) {
@@ -52,7 +54,7 @@ void Hardware::Hardware::fetchOpcode() {
 
 void Hardware::Hardware::decodeOpcode() {
 	unsigned char xNibble, yNibble, nNibble, nnByte, instructionIndex;
-	unsigned short nnn;
+	unsigned short nnn, tempValue;  //Temp value is used for one offs - quick storage of computed index and random number
 
 	xNibble = (this->opcode & 0x0F00) >> 8;
 	yNibble = (this->opcode & 0x00F0) >> 4;
@@ -84,6 +86,14 @@ void Hardware::Hardware::decodeOpcode() {
 		break;
 	case 10:
 		this->indexPointer = nnn;
+		break;
+	case 11:
+		if (oldStyleJump) { programCounter = vRegister[0] + nnn; }
+		else { programCounter = vRegister[xNibble] + nnn; }
+		break;
+	case 12:
+		tempValue = std::rand() % nnByte;
+		vRegister[xNibble] = tempValue & nnByte;
 		break;
 	case 13:
 		isCollision = false;
