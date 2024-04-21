@@ -4,8 +4,10 @@
 
 #include "SDLDisplay.h"
 #include "Hardware.h"
+#include "Keyboard.h"
 
-#define INSTRUCTIONS_PER_SECOND 70
+#define INSTRUCTIONS_PER_SECOND 800  // This value can be modified to change speed of emulation
+#define TIMER_SPEED 60  // Chip 8 runs timers at 60 hz, this value should not be changed
 
 bool checkFilename(int argc, char* argv[]);
 
@@ -14,7 +16,8 @@ int main(int argc, char *argv[]) {
 
 	bool isRunning = true;
 	SDLDisplay::SDLDisplay* display = new SDLDisplay::SDLDisplay();
-	Hardware::Hardware* chip8 = new Hardware::Hardware(display, false);
+	Keyboard::Keyboard* keyboard = new Keyboard::Keyboard();
+	Hardware::Hardware* chip8 = new Hardware::Hardware(display, keyboard, false);
 
 	SDL_Event ev;
 
@@ -23,6 +26,7 @@ int main(int argc, char *argv[]) {
 	if (!chip8->loadProgram(argv[1])) return 1;
 
 	int tickDelay = 1000 / INSTRUCTIONS_PER_SECOND;  //1000 ms in a sec, divide by number of instructions
+	int timerDelay = 1000 / TIMER_SPEED;
 	
 
 	while (isRunning) {
@@ -32,19 +36,25 @@ int main(int argc, char *argv[]) {
 		// Poll events
 		while (SDL_PollEvent(&ev) != 0) {
 			if (ev.type == SDL_QUIT) isRunning = false;
+			if (ev.type == SDL_KEYDOWN || ev.type == SDL_KEYUP) keyboard->handleKeyboard(&ev);
 		}
 		// Process opcode
 		chip8->processInstruction();
 
 		// Update display
-		display->updateWindow();
+		//display->updateWindow();
 
 		// Delay if necessary
 		Uint32 currentTick = SDL_GetTicks();
 		if (currentTick - previousTick < tickDelay) {
-			SDL_Delay(tickDelay - (currentTick - previousTick));
-			
+			SDL_Delay(tickDelay - (currentTick - previousTick));	
 		}
+
+		// Update hardware timers
+		if (currentTick - previousTick < timerDelay) {
+			chip8->decrementTimers();
+		}
+
 	}
 
 	display->destroyDisplay();

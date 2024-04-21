@@ -132,10 +132,12 @@
   <ItemGroup>
     <ClCompile Include="Chip8Emulator.cpp" />
     <ClCompile Include="Hardware.cpp" />
+    <ClCompile Include="Keyboard.cpp" />
     <ClCompile Include="SDLDisplay.cpp" />
   </ItemGroup>
   <ItemGroup>
     <ClInclude Include="Hardware.h" />
+    <ClInclude Include="Keyboard.h" />
     <ClInclude Include="SDLDisplay.h" />
   </ItemGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.targets" />

@@ -1,12 +1,21 @@
 #include "Hardware.h"
 
-Hardware::Hardware::Hardware(SDLDisplay::SDLDisplay* display, bool isOldShift) {
+Hardware::Hardware::Hardware(SDLDisplay::SDLDisplay* display, Keyboard::Keyboard* keyboard, bool isOldShift) {
 	this->display = display;
 	this->indexPointer = 0;
 	this->opcode = 0;
 	this->programCounter = 0;
 	this->stack = new std::stack<short>();
 	this->oldStyleShift = isOldShift;
+	this->keyboard = keyboard;
+
+	this->delayTimer = 0;
+	this->soundTimer = 0;
+
+	// Change this to configurable if there are compatibility issues later
+	this->oldStyleJump = true;
+
+	initializeFont();
 
 	srand(time(NULL));
 }
@@ -118,6 +127,63 @@ void Hardware::Hardware::decodeOpcode() {
 
 		if (isCollision) vRegister[15] = 1;
 		break;
+	case 14:
+		switch (nnByte) {
+		case 0x009e:
+			if (keyboard->getKeyDownStatus(vRegister[xNibble])) { programCounter += 2; }
+			break;
+		case 0x00a1:
+			if (!keyboard->getKeyDownStatus(vRegister[xNibble])) { programCounter += 2; }
+			break;
+		}
+		break;
+	case 15:
+		switch (nnByte) {
+		case 0x0007:
+			vRegister[xNibble] = this->delayTimer;
+			break;
+		case 0x0015:
+			this->delayTimer = vRegister[xNibble];
+			break;
+		case 0x0018:
+			this->soundTimer = vRegister[xNibble];
+			break;
+		case 0x001e:
+			tempValue = 0;
+			indexPointer += vRegister[xNibble];
+			if (indexPointer >= 4096) {
+				//Simulating overflow
+				indexPointer -= 4096;
+				tempValue = 1;
+			}
+			vRegister[15] = tempValue;
+			break;
+		case 0x000a:
+			tempValue = keyboard->getFirstKey();
+			if (tempValue == -1) { programCounter -= 2; } //This simulates a blocking instruction, wait for keypress
+			else { vRegister[xNibble] = tempValue; }
+			break;
+		case 0x0029:
+			indexPointer = vRegister[xNibble] * 5;  // pointing to character in memory.  memory[0] is the first font, each fontCharacter is 5 bytes long
+			break;
+		case 0x0033:
+			tempValue = vRegister[xNibble];
+			memory[indexPointer] = tempValue / 100;
+			memory[indexPointer + 1] = (tempValue / 10) % 10;
+			memory[indexPointer + 2] = tempValue % 10;
+			break;
+		case 0x0055:
+			for (int i = 0; i <= xNibble; i++) {
+				memory[indexPointer + i] = vRegister[i];
+			}
+			break;
+		case 0x0065:
+			for (int i = 0; i <= xNibble; i++) {
+				vRegister[i] = memory[indexPointer + i];
+			}
+			break;
+		}
+		break;
 	case 2:
 		this->stack->push(this->programCounter);
 		this->programCounter = nnn;
@@ -135,7 +201,7 @@ void Hardware::Hardware::decodeOpcode() {
 		vRegister[xNibble] = nnByte;
 		break;
 	case 7:
-		vRegister[xNibble] += nnByte;
+		vRegister[xNibble] = (vRegister[xNibble] + nnByte) & 0x00FF;
 		break;
 	case 8:
 		switch (nNibble) {
@@ -152,31 +218,36 @@ void Hardware::Hardware::decodeOpcode() {
 			vRegister[xNibble] ^= vRegister[yNibble];
 			break;
 		case 4:
-			vRegister[15] = 0;
-			if (vRegister[xNibble] + vRegister[yNibble] > 255) vRegister[15] = 1;
-			vRegister[xNibble] += vRegister[yNibble];
+			tempValue = 0;
+			if (vRegister[xNibble] + vRegister[yNibble] > 255) tempValue = 1;
+			vRegister[xNibble] = (vRegister[xNibble] + vRegister[yNibble]) & 0x00FF;
+			vRegister[15] = tempValue;
 			break;
 		case 5:
-			vRegister[15] = 1;
-			if (vRegister[xNibble] < vRegister[yNibble]) vRegister[15] = 0;
-			vRegister[xNibble] -= vRegister[yNibble];
+			tempValue = 1;
+			if (vRegister[xNibble] < vRegister[yNibble]) tempValue = 0;
+			vRegister[xNibble] = (vRegister[xNibble] - vRegister[yNibble]) & 0x00FF;
+			vRegister[15] = tempValue;
 			break;
 		case 6:
-			vRegister[15] = 0;
+			tempValue = 0;
 			if (this->oldStyleShift == true) vRegister[xNibble] = vRegister[yNibble];
-			if ((vRegister[xNibble] & 0x01) == 1) vRegister[15] = 1;
+			if ((vRegister[xNibble] & 0x1) == 1) tempValue = 1;
 			vRegister[xNibble] >>= 1;
+			vRegister[15] = tempValue;
 			break;
 		case 7:
-			vRegister[15] = 1;
-			if (vRegister[yNibble] < vRegister[xNibble]) vRegister[15] = 0;
-			vRegister[yNibble] -= vRegister[xNibble];
+			tempValue = 1;
+			if (vRegister[yNibble] < vRegister[xNibble]) tempValue = 0;
+			vRegister[xNibble] = (vRegister[yNibble] - vRegister[xNibble]) & 0x00FF;
+			vRegister[15] = tempValue;
 			break;
 		case 14:
-			vRegister[15] = 0;
+			tempValue = 0;
 			if (this->oldStyleShift == true) vRegister[xNibble] = vRegister[yNibble];
-			if ((vRegister[xNibble] & 0x80) == 128) vRegister[15] = 1;
+			tempValue = (vRegister[xNibble] >> 7) & 0x1;
 			vRegister[xNibble] <<= 1;
+			vRegister[15] = tempValue;
 			break;
 		}
 		break;
@@ -186,4 +257,33 @@ void Hardware::Hardware::decodeOpcode() {
 	}
 
 	return;
+}
+
+void Hardware::Hardware::decrementTimers() {
+	if (this->delayTimer > 0) { this->delayTimer -= 1; }
+	if (this->soundTimer > 0) { this->soundTimer -= 1; }
+}
+
+void Hardware::Hardware::initializeFont() {
+	unsigned char fontCharacters[80] = {
+		0xF0, 0x90, 0x90, 0x90, 0xF0,  // 0
+		0x20, 0x60, 0x20, 0x20, 0x70,  // 1
+		0xF0, 0x10, 0xF0, 0x80, 0xF0,  // 2
+		0xF0, 0x10, 0xF0, 0x10, 0xF0,  // 3
+		0x90, 0x90, 0xF0, 0x10, 0x10,  // 4
+		0xF0, 0x80, 0xF0, 0x10, 0xF0,  // 5
+		0xF0, 0x80, 0xF0, 0x90, 0xF0,  // 6
+		0xF0, 0x10, 0x20, 0x40, 0x40,  // 7
+		0xF0, 0x90, 0xF0, 0x90, 0xF0,  // 8
+		0xF0, 0x90, 0xF0, 0x10, 0xF0,  // 9
+		0xF0, 0x90, 0xF0, 0x90, 0x90,  // A
+		0xE0, 0x90, 0xE0, 0x90, 0xE0,  // B
+		0xF0, 0x80, 0x80, 0x80, 0xF0,  // C
+		0xE0, 0x90, 0x90, 0x90, 0xE0,  // D
+		0xF0, 0x80, 0xF0, 0x80, 0xF0,  // E
+		0xF0, 0x80, 0xF0, 0x80, 0x80   // F
+	};
+		// place the fonts into memory
+	memcpy(memory, fontCharacters, sizeof(fontCharacters));
+	
 }

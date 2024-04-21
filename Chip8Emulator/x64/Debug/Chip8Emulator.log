@@ -1,4 +1,4 @@
-﻿  Hardware.cpp
-H:\Prog\cpp\chip8\Chip8Emulator\Hardware.cpp(11,12): warning C4244: 'argument': conversion from 'time_t' to 'unsigned int', possible loss of data
-H:\Prog\cpp\chip8\Chip8Emulator\Hardware.cpp(109,42): warning C4554: '>>': check operator precedence for possible error; use parentheses to clarify precedence
+﻿  Chip8Emulator.cpp
+H:\Prog\cpp\chip8\Chip8Emulator\Chip8Emulator.cpp(49,34): warning C4018: '<': signed/unsigned mismatch
+H:\Prog\cpp\chip8\Chip8Emulator\Chip8Emulator.cpp(54,34): warning C4018: '<': signed/unsigned mismatch
   Chip8Emulator.vcxproj -> H:\Prog\cpp\chip8\x64\Debug\Chip8Emulator.exe

@@ -48,6 +48,7 @@ void SDLDisplay::SDLDisplay::clearScreen() {
 
 	SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, 255);
 	SDL_RenderClear(this->renderer);
+	SDL_RenderPresent(this->renderer);
 }
 
 bool SDLDisplay::SDLDisplay::drawPixel(short x, short y) {
@@ -55,10 +56,9 @@ bool SDLDisplay::SDLDisplay::drawPixel(short x, short y) {
 
 	if (this->displayMemory[x][y] == 1) {
 		alreadyExists = true;
-		this->displayMemory[x][y] == 0;
-	}
-	else {
-		this->displayMemory[x][y] == 1;
+		this->displayMemory[x][y] = 0;
+	} else {
+		this->displayMemory[x][y] = 1;
 	}
 
 	SDL_Rect* pixel = new SDL_Rect;
@@ -72,6 +72,26 @@ bool SDLDisplay::SDLDisplay::drawPixel(short x, short y) {
 	else { SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, 255); }
 	SDL_RenderFillRect(this->renderer, pixel);
 	//SDL_SetRenderDrawColor(this->renderer, 0, 0, 0, 255);
+	SDL_RenderPresent(this->renderer);
+
+	//this->clearScreen();
+
+	//SDL_SetRenderDrawColor(this->renderer, 255, 255, 255, 255);
+
+	//for (int i = 0; i < WIDTH; i++) {
+	//	for (int j = 0; j < HEIGHT; j++) {
+	//		if (displayMemory[i][j] == 1) {
+	//			SDL_Rect* pixel = new SDL_Rect;
+	//			pixel->x = x * SCREEN_SCALE;
+	//			pixel->y = y * SCREEN_SCALE;
+	//			pixel->w = SCREEN_SCALE;
+	//			pixel->h = SCREEN_SCALE;
+
+	//			SDL_RenderFillRect(this->renderer, pixel);
+	//		}
+	//	}
+	//}
+
 	SDL_RenderPresent(this->renderer);
 
 	return alreadyExists;
